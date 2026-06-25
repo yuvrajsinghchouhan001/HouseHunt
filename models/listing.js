@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
+const review = require("./review");
 const Schema = mongoose.Schema;
+const Review = require("./review.js");
 
 const listingSchema = new Schema({
     title: {
@@ -8,24 +10,39 @@ const listingSchema = new Schema({
     },
     description: String,
     image: {
-  filename: {
-    type: String,
-    default: "listingimage",
-  },
-    url: {
-        type:String,
-        default:"https://unsplash.com/photos/kitchen-and-dining-area-with-wooden-cabinets-and-table-5UbhBxb_pdA",//if user does not enter any image 
-        set: (v) =>
-            v === ""
-         ? "https://unsplash.com/photos/kitchen-and-dining-area-with-wooden-cabinets-and-table-5UbhBxb_pdA": v, 
-         //if user enter empty image then 
-        //this default image will appear and if user enters the image then than image will appear
+      url: String,
+      filename: String,
     },
-},
     price: Number,
     location: String,
     country: String,
+    reviews:[
+    {
+        type: Schema.Types.ObjectId,
+        ref: "Review",
+    },
+],
+ owner: {
+  type: Schema.Types.ObjectId,
+  ref: "User",
+ },
+ geometry:{
+  type: String,
+  enum: ['Point'],
+  required: true
+ },
+
+ coordinates: {
+  type: [Number],
+  requires: true
+ }
 });
+
+listingSchema.post("findOneAndDelete" , async (listing) => {
+  if (listing) {  
+    await Review.deleteMany({_id: {$in: listing.reviews}});
+  }
+})
 
 const Listing = mongoose.model("Listing", listingSchema);
 module.exports = Listing;
